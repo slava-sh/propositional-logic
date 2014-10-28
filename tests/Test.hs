@@ -63,9 +63,9 @@ isDisjunctionOfLiterals _                      = False
 
 qcTests = testGroup "QuickCheck tests"
     [ testProperty "CNF of x is semantically equivalent to x" $ \x ->
-          truthTable (conjunctiveNormalForm x) == truthTable x
+          truthTable (toCNF x) == truthTable x
     , testProperty "CNF is a conjunction of disjuncitons" $ \x ->
-          isCNF $ conjunctiveNormalForm x
+          isCNF $ toCNF x
     ]
 
 cnfs =
@@ -87,9 +87,9 @@ notCnfs =
     ]
 
 unitTests = testGroup "Unit tests"
-    [ testCase "CNF of an atom: p" $ conjunctiveNormalForm p @?= p
-    , testCase "CNF of an atom: q" $ conjunctiveNormalForm q @?= q
-    , testCase "CNF of an atom: r" $ conjunctiveNormalForm r @?= r
+    [ testCase "CNF of an atom: p" $ toCNF p @?= p
+    , testCase "CNF of an atom: q" $ toCNF q @?= q
+    , testCase "CNF of an atom: r" $ toCNF r @?= r
     , testCase "isCNF: True"  $ True  @=? all isCNF cnfs
     , testCase "isCNF: False" $ False @=? any isCNF notCnfs
     ]

@@ -25,28 +25,28 @@ instance Show Expr where
             parens (Literal x) = [x]
             parens x           = "(" ++ show x ++ ")"
 
-conjunctiveNormalForm :: Expr -> Expr
-conjunctiveNormalForm = conjunctiveNormalForm' . negationNormalForm
+toCNF :: Expr -> Expr
+toCNF = toCNF' . toNNF
 
-conjunctiveNormalForm' :: Expr -> Expr
-conjunctiveNormalForm' = id
+toCNF' :: Expr -> Expr
+toCNF' = id
 
-negationNormalForm :: Expr -> Expr
-negationNormalForm = negationNormalForm' . implicationFree
+toNNF :: Expr -> Expr
+toNNF = toNNF' . implicationFree
 
-negationNormalForm' :: Expr -> Expr
-negationNormalForm' (Literal x)       = Literal x
-negationNormalForm' (Conjunction x y) =
-    (Conjunction `on` negationNormalForm') x y
-negationNormalForm' (Disjunction x y) =
-    (Disjunction `on` negationNormalForm') x y
-negationNormalForm' (Negation (Literal x)) = Negation (Literal x)
-negationNormalForm' (Negation (Negation x)) = negationNormalForm' x
-negationNormalForm' (Negation (Conjunction x y)) =
-    (Disjunction `on` (negationNormalForm' . Negation)) x y
-negationNormalForm' (Negation (Disjunction x y)) =
-    (Conjunction `on` (negationNormalForm' . Negation)) x y
-negationNormalForm' _ = error "negationNormalForm': incorrect expression"
+toNNF' :: Expr -> Expr
+toNNF' (Literal x)       = Literal x
+toNNF' (Conjunction x y) =
+    (Conjunction `on` toNNF') x y
+toNNF' (Disjunction x y) =
+    (Disjunction `on` toNNF') x y
+toNNF' (Negation (Literal x)) = Negation (Literal x)
+toNNF' (Negation (Negation x)) = toNNF' x
+toNNF' (Negation (Conjunction x y)) =
+    (Disjunction `on` (toNNF' . Negation)) x y
+toNNF' (Negation (Disjunction x y)) =
+    (Conjunction `on` (toNNF' . Negation)) x y
+toNNF' _ = error "toNNF': incorrect expression"
 
 implicationFree :: Expr -> Expr
 implicationFree (Literal x)       = Literal x
