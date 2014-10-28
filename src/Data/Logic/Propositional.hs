@@ -1,5 +1,7 @@
 module Data.Logic.Propositional where
 
+import Data.Function (on)
+
 type Variable = Char
 
 data Expr
@@ -24,13 +26,27 @@ instance Show Expr where
             parens x           = "(" ++ show x ++ ")"
 
 conjunctiveNormalForm :: Expr -> Expr
-conjunctiveNormalForm = conjunctiveNormalForm' . negationNormalForm . implicationFree
+conjunctiveNormalForm = conjunctiveNormalForm' . negationNormalForm
 
 conjunctiveNormalForm' :: Expr -> Expr
 conjunctiveNormalForm' = id
 
 negationNormalForm :: Expr -> Expr
-negationNormalForm = id
+negationNormalForm = negationNormalForm' . implicationFree
+
+negationNormalForm' :: Expr -> Expr
+negationNormalForm' (Literal x)       = Literal x
+negationNormalForm' (Conjunction x y) =
+    (Conjunction `on` negationNormalForm') x y
+negationNormalForm' (Disjunction x y) =
+    (Disjunction `on` negationNormalForm') x y
+negationNormalForm' (Negation (Literal x)) = Negation (Literal x)
+negationNormalForm' (Negation (Negation x)) = negationNormalForm' x
+negationNormalForm' (Negation (Conjunction x y)) =
+    (Disjunction `on` (negationNormalForm' . Negation)) x y
+negationNormalForm' (Negation (Disjunction x y)) =
+    (Conjunction `on` (negationNormalForm' . Negation)) x y
+negationNormalForm' _ = error "negationNormalForm': incorrect expression"
 
 implicationFree :: Expr -> Expr
 implicationFree = id

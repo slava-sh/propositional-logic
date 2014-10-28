@@ -90,6 +90,6 @@ unitTests = testGroup "Unit tests"
     [ testCase "CNF of an atom: p" $ conjunctiveNormalForm p @?= p
     , testCase "CNF of an atom: q" $ conjunctiveNormalForm q @?= q
     , testCase "CNF of an atom: r" $ conjunctiveNormalForm r @?= r
-    , testCase "isCNF: True" $ True  @=? all isCNF cnfs
+    , testCase "isCNF: True"  $ True  @=? all isCNF cnfs
     , testCase "isCNF: False" $ False @=? any isCNF notCnfs
     ]
