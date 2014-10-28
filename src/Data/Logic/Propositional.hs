@@ -1,39 +1,36 @@
 module Data.Logic.Propositional where
 
-data Formula
-    = Literal String
-    | Not     Formula
-    | And     Formula Formula
-    | Or      Formula Formula
-    | Implies Formula Formula
+type Variable = Char
 
-instance Show Formula where
+data Expr
+    = Literal     Variable
+    | Negation    Expr
+    | Conjunction Expr Expr
+    | Disjunction Expr Expr
+    | Implication Expr Expr
+    deriving Eq
+
+instance Show Expr where
     show formula = case formula of
-            (Literal x)   -> x
-            (Not x)       -> "¬" ++ parens x
-            (And x y)     -> showBinary "∧" x y
-            (Or x y)      -> showBinary "∨" x y
-            (Implies x y) -> showBinary "→" x y
+            (Literal x)       -> [x]
+            (Negation x)      -> "¬" ++ parens x
+            (Conjunction x y) -> showBinary "∧" x y
+            (Disjunction x y) -> showBinary "∨" x y
+            (Implication x y) -> showBinary "→" x y
         where
             showBinary op x y = parens x ++ " " ++ op ++ " " ++ parens y
-            parens (Literal x) = x
+
+            parens (Literal x) = [x]
             parens x           = "(" ++ show x ++ ")"
 
-conjunctiveNormalForm :: Formula -> Formula
+conjunctiveNormalForm :: Expr -> Expr
 conjunctiveNormalForm = conjunctiveNormalForm' . negationNormalForm . implicationFree
 
-conjunctiveNormalForm' :: Formula -> Formula
+conjunctiveNormalForm' :: Expr -> Expr
 conjunctiveNormalForm' = id
 
-negationNormalForm :: Formula -> Formula
+negationNormalForm :: Expr -> Expr
 negationNormalForm = id
 
-implicationFree :: Formula -> Formula
+implicationFree :: Expr -> Expr
 implicationFree = id
-
-main :: IO ()
-main = do
-    putStrLn "Transform a propositional logic formula into an equivalent formula in CNF"
-    let x = Not (Not (Literal "a" `Or` Not (Literal "b"))) `And` (Literal "a" `Implies` Literal "b")
-    print x
-    print $ conjunctiveNormalForm x
