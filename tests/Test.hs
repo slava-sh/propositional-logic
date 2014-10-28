@@ -11,15 +11,15 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "Tests" [qcTests, unitTests]
 
-lit  = Literal
+var  = Variable
 neg  = Negation
 conj = Conjunction
 disj = Disjunction
 impl = Implication
 
-p = lit 'p'
-q = lit 'q'
-r = lit 'r'
+p = var 'p'
+q = var 'q'
+r = var 'r'
 
 instance Arbitrary Expr where
     arbitrary = sized expr
@@ -41,10 +41,10 @@ truthTable x = do
     r <- [False, True]
     return $ eval [('p', p), ('q', q), ('r', r)] x
 
-eval :: [(Variable, Bool)] -> Expr -> Bool
+eval :: [(Atom, Bool)] -> Expr -> Bool
 eval env = eval'
     where
-        eval' (Literal x)       = fromJust $ lookup x env
+        eval' (Variable x)      = fromJust $ lookup x env
         eval' (Negation x)      = not $ eval' x
         eval' (Conjunction x y) = eval' x && eval' y
         eval' (Disjunction x y) = eval' x || eval' y
@@ -52,14 +52,14 @@ eval env = eval'
 
 isCNF :: Expr -> Bool
 isCNF (Conjunction x y) = isCNF x && isCNF y
-isCNF x                 = isDisjunctionOfLiterals x
+isCNF x                 = isDisj x
+    where
+        isDisj (Disjunction x y)      = isDisj x && isDisj y
+        isDisj x                      = isLit x
 
-isDisjunctionOfLiterals :: Expr -> Bool
-isDisjunctionOfLiterals (Literal _)            = True
-isDisjunctionOfLiterals (Negation (Literal _)) = True
-isDisjunctionOfLiterals (Disjunction x y)      =
-    isDisjunctionOfLiterals x && isDisjunctionOfLiterals y
-isDisjunctionOfLiterals _                      = False
+        isLit (Variable _)            = True
+        isLit (Negation (Variable _)) = True
+        isLit _                       = False
 
 qcTests = testGroup "QuickCheck tests"
     [ testProperty "CNF of x is semantically equivalent to x" $ \x ->

@@ -1,15 +1,15 @@
 module Data.Logic.Propositional
     ( Expr(..)
-    , Variable
+    , Atom
     , toCNF
     ) where
 
 import Data.Function (on)
 
-type Variable = Char
+type Atom = Char
 
 data Expr
-    = Literal     Variable
+    = Variable    Atom
     | Negation    Expr
     | Conjunction Expr Expr
     | Disjunction Expr Expr
@@ -27,7 +27,7 @@ disj = Disjunction
 
 instance Show Expr where
     show expr = case expr of
-            (Literal x)       -> [x]
+            (Variable x)       -> [x]
             (Negation x)      -> "¬" ++ parens x
             (Conjunction x y) -> showBinary "∧" x y
             (Disjunction x y) -> showBinary "∨" x y
@@ -35,7 +35,7 @@ instance Show Expr where
         where
             showBinary op x y = parens x ++ " " ++ op ++ " " ++ parens y
 
-            parens (Literal x) = [x]
+            parens (Variable x) = [x]
             parens x           = "(" ++ show x ++ ")"
 
 toCNF :: Expr -> Expr
@@ -50,11 +50,11 @@ toCNF = toCNF' . toNNF
         dist x y                   = x `disj` y
 
 toNNF :: Expr -> Expr
-toNNF x@(Literal _) = x
+toNNF x@(Variable _) = x
 toNNF (Conjunction x y) = (conj `on` toNNF) x y
 toNNF (Disjunction x y) = (disj `on` toNNF) x y
 toNNF (Implication x y) = (disj `on` toNNF) (neg x) y
-toNNF (Negation (Literal x)) = Negation (Literal x)
+toNNF (Negation (Variable x)) = Negation (Variable x)
 toNNF (Negation (Negation x)) = toNNF x
 toNNF (Negation (Conjunction x y)) = (disj `on` (toNNF . neg)) x y
 toNNF (Negation (Disjunction x y)) = (conj `on` (toNNF . neg)) x y
