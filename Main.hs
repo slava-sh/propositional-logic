@@ -4,7 +4,18 @@ data Formula
     | And     Formula Formula
     | Or      Formula Formula
     | Implies Formula Formula
-    deriving Show
+
+instance Show Formula where
+    show formula = case formula of
+            (Literal x)   -> x
+            (Not x)       -> "¬" ++ parens x
+            (And x y)     -> showBinary "∧" x y
+            (Or x y)      -> showBinary "∨" x y
+            (Implies x y) -> showBinary "→" x y
+        where
+            showBinary op x y = parens x ++ " " ++ op ++ " " ++ parens y
+            parens (Literal x) = x
+            parens x           = "(" ++ show x ++ ")"
 
 conjunctiveNormalForm :: Formula -> Formula
 conjunctiveNormalForm = conjunctiveNormalForm' . negationNormalForm . implicationFree
