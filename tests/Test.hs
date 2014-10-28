@@ -1,5 +1,5 @@
 import Test.Tasty
-import Test.Tasty.QuickCheck as QC
+import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
 import Control.Applicative
 import Data.Maybe
@@ -50,16 +50,46 @@ eval env = eval'
         eval' (Disjunction x y) = eval' x ||  eval' y
         eval' (Implication x y) = not (eval' x) || eval' y
 
+isCNF :: Expr -> Bool
+isCNF (Conjunction x y) = isCNF x && isCNF y
+isCNF x                 = isDisjunctionOfLiterals x
+
+isDisjunctionOfLiterals :: Expr -> Bool
+isDisjunctionOfLiterals (Literal _)            = True
+isDisjunctionOfLiterals (Negation (Literal _)) = True
+isDisjunctionOfLiterals (Disjunction x y)      =
+    isDisjunctionOfLiterals x && isDisjunctionOfLiterals y
+isDisjunctionOfLiterals _                      = False
+
 qcTests = testGroup "QuickCheck tests"
-    [ QC.testProperty "CNF of x is semantically equivalent to x" $ \x ->
+    [ testProperty "CNF of x is semantically equivalent to x" $ \x ->
           truthTable (conjunctiveNormalForm x) == truthTable x
+    , testProperty "CNF is a conjunction of disjuncitons" $ \x ->
+          isCNF $ conjunctiveNormalForm x
+    ]
+
+cnfs =
+    [ p
+    , p `or'` not' q
+    , (not' p `or'` (r `or'` not' q)) `or'` (not' q `or'` (not' p `or'` q))
+    , p `and'` q `and'` not' r `and'` r
+    ]
+
+notCnfs =
+    [ (not' p `or'` not' (r `or'` not' q)) `or'` p
+    --              ^        ^
+    , (not' p `or'` (r `and'` not' q)) `or'` p
+    --                  ^
+    , (not' p `or'` (r `implies` not' q)) `or'` p
+    --                  ^
+    , (p `or'` not' (not' q))
+    --         ^     ^
     ]
 
 unitTests = testGroup "Unit tests"
-    [ testCase "CNF of an atom: p" $
-        conjunctiveNormalForm p @?= p
-    , testCase "CNF of an atom: q" $
-        conjunctiveNormalForm q @?= q
-    , testCase "CNF of an atom: r" $
-        conjunctiveNormalForm r @?= r
+    [ testCase "CNF of an atom: p" $ conjunctiveNormalForm p @?= p
+    , testCase "CNF of an atom: q" $ conjunctiveNormalForm q @?= q
+    , testCase "CNF of an atom: r" $ conjunctiveNormalForm r @?= r
+    , testCase "isCNF: True" $ True  @=? all isCNF cnfs
+    , testCase "isCNF: False" $ False @=? any isCNF notCnfs
     ]
