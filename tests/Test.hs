@@ -11,25 +11,19 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "Tests" [qcTests, unitTests]
 
-var  = Variable
-neg  = Negation
-conj = Conjunction
-disj = Disjunction
-impl = Implication
-
-p = var 'p'
-q = var 'q'
-r = var 'r'
+p = Var 'p'
+q = Var 'q'
+r = Var 'r'
 
 instance Arbitrary Expr where
     arbitrary = sized expr
         where
             expr 0 = elements [p, q, r]
             expr n = oneof
-                [ Negation <$> expr n'
-                , Conjunction <$> expr n' <*> expr n'
-                , Disjunction <$> expr n' <*> expr n'
-                , Implication <$> expr n' <*> expr n'
+                [ (Neg) <$> expr n'
+                , (:/\) <$> expr n' <*> expr n'
+                , (:\/) <$> expr n' <*> expr n'
+                , (:->) <$> expr n' <*> expr n'
                 ]
                 where
                     n' = n `div` 2
@@ -44,60 +38,60 @@ truthTable x = do
 eval :: [(Atom, Bool)] -> Expr -> Bool
 eval env = eval'
     where
-        eval' (Variable x)      = fromJust $ lookup x env
-        eval' (Negation x)      = not $ eval' x
-        eval' (Conjunction x y) = eval' x && eval' y
-        eval' (Disjunction x y) = eval' x || eval' y
-        eval' (Implication x y) = not (eval' x) || eval' y
+        eval' (Var x)   = fromJust $ lookup x env
+        eval' (Neg x)   = not $ eval' x
+        eval' (x :/\ y) = eval' x && eval' y
+        eval' (x :\/ y) = eval' x || eval' y
+        eval' (x :-> y) = not (eval' x) || eval' y
 
 isCNF :: Expr -> Bool
-isCNF (Conjunction x y) = isCNF x && isCNF y
-isCNF x                 = isDisj x
+isCNF (:/\ x y) = isCNF x && isCNF y
+isCNF x         = isDisj x
     where
-        isDisj (Disjunction x y)      = isDisj x && isDisj y
-        isDisj x                      = isLit x
+        isDisj (:\/ x y) = isDisj x && isDisj y
+        isDisj x         = isLit x
 
-        isLit (Variable _)            = True
-        isLit (Negation (Variable _)) = True
-        isLit _                       = False
+        isLit (Var _)       = True
+        isLit (Neg (Var _)) = True
+        isLit _             = False
 
-containsNonatomicNegations :: Expr -> Bool
-containsNonatomicNegations = go
+containsNonatomicNegs :: Expr -> Bool
+containsNonatomicNegs = go
     where
-        go (Variable _)            = False
-        go (Negation (Variable _)) = False
-        go (Negation _)            = True
-        go (Conjunction x y)       = go x || go y
-        go (Disjunction x y)       = go x || go y
-        go (Implication x y)       = go x || go y
+        go (Var _)       = False
+        go (Neg (Var _)) = False
+        go (Neg _)       = True
+        go (x :/\ y)     = go x || go y
+        go (x :\/ y)     = go x || go y
+        go (x :-> y)     = go x || go y
 
 qcTests = testGroup "QuickCheck tests"
     [ testProperty "CNF of x is semantically equivalent to x" $ \x ->
           truthTable (toCNF x) == truthTable x
-    , testProperty "CNF is a conjunction of disjuncitons" $ \x ->
+    , testProperty "CNF is a :/\ of (:\/)uncitons" $ \x ->
           isCNF $ toCNF x
     , testProperty "NNF of x is semantically equivalent to x" $ \x ->
           truthTable (toNNF x) == truthTable x
-    , testProperty "In NNF only atoms are negated" $ \x ->
-          not . containsNonatomicNegations $ toNNF x
+    , testProperty "In NNF only atoms are Negated" $ \x ->
+          not . containsNonatomicNegs $ toNNF x
     ]
 
 cnfs =
     [ p
-    , p `disj` neg q
-    , (neg p `disj` (r `disj` neg q)) `disj` (neg q `disj` (neg p `disj` q))
-    , p `conj` q `conj` neg r `conj` r
+    , p :\/ Neg q
+    , (Neg p :\/ (r :\/ Neg q)) :\/ (Neg q :\/ (Neg p :\/ q))
+    , p :/\ q :/\ Neg r :/\ r
     ]
 
 notCnfs =
-    [ (neg p `disj` neg (r `disj` neg q)) `disj` p
-    --              ^       ^
-    , (neg p `disj` (r `conj` neg q)) `disj` p
-    --                  ^
-    , (neg p `disj` (r `impl` neg q)) `disj` p
-    --                  ^
-    , (p `disj` neg (neg q))
-    --          ^     ^
+    [ (Neg p :\/ Neg (r :\/ Neg q)) :\/ p
+    --           ^      ^
+    , (Neg p :\/ (r :/\ Neg q)) :\/ p
+    --              ^
+    , (Neg p :\/ (r :-> Neg q)) :\/ p
+    --              ^
+    , (p :\/ Neg (Neg q))
+    --       ^    ^
     ]
 
 unitTests = testGroup "Unit tests"
