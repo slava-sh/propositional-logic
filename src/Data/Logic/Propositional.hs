@@ -1,4 +1,8 @@
-module Data.Logic.Propositional where
+module Data.Logic.Propositional
+    ( Expr(..)
+    , Variable
+    , toCNF
+    ) where
 
 import Data.Function (on)
 
@@ -29,13 +33,24 @@ toCNF :: Expr -> Expr
 toCNF = toCNF' . toNNF
 
 toCNF' :: Expr -> Expr
-toCNF' = id
+toCNF' (Literal x)            = Literal x
+toCNF' (Negation (Literal x)) = Negation (Literal x)
+toCNF' (Conjunction x y)      = (Conjunction `on` toCNF') x y
+toCNF' (Disjunction x y)      = (distributeDisjunction `on` toCNF') x y
+toCNF' _                      = error "toCNF': incorrect expression"
+
+distributeDisjunction :: Expr -> Expr -> Expr
+distributeDisjunction (Conjunction x1 x2) y =
+    Conjunction (distributeDisjunction x1 y) (distributeDisjunction x2 y)
+distributeDisjunction x (Conjunction y1 y2) =
+    Conjunction (distributeDisjunction x y1) (distributeDisjunction x y2)
+distributeDisjunction x y = Disjunction x y
 
 toNNF :: Expr -> Expr
 toNNF = toNNF' . implicationFree
 
 toNNF' :: Expr -> Expr
-toNNF' (Literal x)       = Literal x
+toNNF' (Literal x) = Literal x
 toNNF' (Conjunction x y) =
     (Conjunction `on` toNNF') x y
 toNNF' (Disjunction x y) =
