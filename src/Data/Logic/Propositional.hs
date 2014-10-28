@@ -48,4 +48,4 @@ toNNF (x :\/ y)       = toNNF x       :\/ toNNF y
 toNNF (x :-> y)       = toNNF (Neg x) :\/ toNNF y
 toNNF (Neg (x :/\ y)) = toNNF (Neg x) :\/ toNNF (Neg y)
 toNNF (Neg (x :\/ y)) = toNNF (Neg x) :/\ toNNF (Neg y)
-toNNF (Neg (x :-> y)) = toNNF x       :\/ toNNF (Neg y)
+toNNF (Neg (x :-> y)) = toNNF x       :/\ toNNF (Neg y)

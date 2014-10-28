@@ -45,18 +45,18 @@ eval env = eval'
         eval' (x :-> y) = not (eval' x) || eval' y
 
 isCNF :: Expr -> Bool
-isCNF (:/\ x y) = isCNF x && isCNF y
+isCNF (x :/\ y) = isCNF x && isCNF y
 isCNF x         = isDisj x
     where
-        isDisj (:\/ x y) = isDisj x && isDisj y
+        isDisj (x :\/ y) = isDisj x && isDisj y
         isDisj x         = isLit x
 
         isLit (Var _)       = True
         isLit (Neg (Var _)) = True
         isLit _             = False
 
-containsNonatomicNegs :: Expr -> Bool
-containsNonatomicNegs = go
+containsNonatomicNegations :: Expr -> Bool
+containsNonatomicNegations = go
     where
         go (Var _)       = False
         go (Neg (Var _)) = False
@@ -68,12 +68,12 @@ containsNonatomicNegs = go
 qcTests = testGroup "QuickCheck tests"
     [ testProperty "CNF of x is semantically equivalent to x" $ \x ->
           truthTable (toCNF x) == truthTable x
-    , testProperty "CNF is a :/\ of (:\/)uncitons" $ \x ->
+    , testProperty "CNF is a conjunction of disjuncitons" $ \x ->
           isCNF $ toCNF x
     , testProperty "NNF of x is semantically equivalent to x" $ \x ->
           truthTable (toNNF x) == truthTable x
-    , testProperty "In NNF only atoms are Negated" $ \x ->
-          not . containsNonatomicNegs $ toNNF x
+    , testProperty "In NNF only atoms are negated" $ \x ->
+          not . containsNonatomicNegations $ toNNF x
     ]
 
 cnfs =
