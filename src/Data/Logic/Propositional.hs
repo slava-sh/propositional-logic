@@ -27,7 +27,7 @@ disj = Disjunction
 
 instance Show Expr where
     show expr = case expr of
-            (Variable x)       -> [x]
+            (Variable x)      -> [x]
             (Negation x)      -> "¬" ++ parens x
             (Conjunction x y) -> showBinary "∧" x y
             (Disjunction x y) -> showBinary "∨" x y
@@ -36,7 +36,7 @@ instance Show Expr where
             showBinary op x y = parens x ++ " " ++ op ++ " " ++ parens y
 
             parens (Variable x) = [x]
-            parens x           = "(" ++ show x ++ ")"
+            parens x            = "(" ++ show x ++ ")"
 
 toCNF :: Expr -> Expr
 toCNF = toCNF' . toNNF
@@ -50,12 +50,12 @@ toCNF = toCNF' . toNNF
         dist x y                   = x `disj` y
 
 toNNF :: Expr -> Expr
-toNNF x@(Variable _) = x
-toNNF (Conjunction x y) = (conj `on` toNNF) x y
-toNNF (Disjunction x y) = (disj `on` toNNF) x y
-toNNF (Implication x y) = (disj `on` toNNF) (neg x) y
-toNNF (Negation (Variable x)) = Negation (Variable x)
-toNNF (Negation (Negation x)) = toNNF x
+toNNF x@(Variable _)               = x
+toNNF x@(Negation (Variable _))    = x
+toNNF (Conjunction x y)            = (conj `on` toNNF) x y
+toNNF (Disjunction x y)            = (disj `on` toNNF) x y
+toNNF (Implication x y)            = (disj `on` toNNF) (neg x) y
+toNNF (Negation (Implication x y)) = (conj `on` toNNF) x (neg y)
 toNNF (Negation (Conjunction x y)) = (disj `on` (toNNF . neg)) x y
 toNNF (Negation (Disjunction x y)) = (conj `on` (toNNF . neg)) x y
-toNNF (Negation (Implication x y)) = (conj `on` toNNF) x (neg y)
+toNNF (Negation (Negation x))      = toNNF x
