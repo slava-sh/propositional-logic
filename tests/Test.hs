@@ -22,13 +22,17 @@ q = lit 'q'
 r = lit 'r'
 
 instance Arbitrary Expr where
-    arbitrary = oneof
-        [ elements [p, q, r]
-        , Negation <$> arbitrary
-        , Conjunction <$> arbitrary <*> arbitrary
-        , Disjunction <$> arbitrary <*> arbitrary
-        , Implication <$> arbitrary <*> arbitrary
-        ]
+    arbitrary = sized expr
+        where
+            expr 0 = elements [p, q, r]
+            expr n = oneof
+                [ Negation <$> expr n'
+                , Conjunction <$> expr n' <*> expr n'
+                , Disjunction <$> expr n' <*> expr n'
+                , Implication <$> expr n' <*> expr n'
+                ]
+                where
+                    n' = n `div` 2
 
 truthTable :: Expr -> [Bool]
 truthTable x = do
