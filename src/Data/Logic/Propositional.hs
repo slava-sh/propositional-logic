@@ -15,18 +15,20 @@ data Expr
     | Expr :-> Expr
     deriving Eq
 
-instance Show Expr where
-    show expr = case expr of
-            (Var x)   -> [x]
-            (Neg x)   -> "¬" ++ parens x
-            (x :/\ y) -> showBinary "∧" x y
-            (x :\/ y) -> showBinary "∨" x y
-            (x :-> y) -> showBinary "→" x y
-        where
-            showBinary op x y = parens x ++ " " ++ op ++ " " ++ parens y
+infixl 3 :/\
+infixl 2 :\/
+infixr 1 :->
 
-            parens (Var x) = [x]
-            parens x       = "(" ++ show x ++ ")"
+instance Show Expr where
+    showsPrec p expr = case expr of
+            (Var x)   -> showChar x
+            (Neg x)   -> showChar '¬' . showsPrec 4 x
+            (x :/\ y) -> showBinary " ∧ " 3 x y
+            (x :\/ y) -> showBinary " ∨ " 2 x y
+            (x :-> y) -> showBinary " → " 1 x y
+        where
+            showBinary op p' x y = showParen (p' < p) $
+                showsPrec p' x . showString op . showsPrec p' y
 
 toCNF :: Expr -> Expr
 toCNF = toCNF' . toNNF
