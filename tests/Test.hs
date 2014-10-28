@@ -11,11 +11,11 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "Tests" [qcTests, unitTests]
 
-lit     = Literal
-not'    = Negation
-and'    = Conjunction
-or'     = Disjunction
-implies = Implication
+lit  = Literal
+neg  = Negation
+conj = Conjunction
+disj = Disjunction
+impl = Implication
 
 p = lit 'p'
 q = lit 'q'
@@ -47,7 +47,7 @@ eval env = eval'
         eval' (Literal x)       = fromJust $ lookup x env
         eval' (Negation x)      = not $ eval' x
         eval' (Conjunction x y) = eval' x && eval' y
-        eval' (Disjunction x y) = eval' x ||  eval' y
+        eval' (Disjunction x y) = eval' x || eval' y
         eval' (Implication x y) = not (eval' x) || eval' y
 
 isCNF :: Expr -> Bool
@@ -70,20 +70,20 @@ qcTests = testGroup "QuickCheck tests"
 
 cnfs =
     [ p
-    , p `or'` not' q
-    , (not' p `or'` (r `or'` not' q)) `or'` (not' q `or'` (not' p `or'` q))
-    , p `and'` q `and'` not' r `and'` r
+    , p `disj` neg q
+    , (neg p `disj` (r `disj` neg q)) `disj` (neg q `disj` (neg p `disj` q))
+    , p `conj` q `conj` neg r `conj` r
     ]
 
 notCnfs =
-    [ (not' p `or'` not' (r `or'` not' q)) `or'` p
-    --              ^        ^
-    , (not' p `or'` (r `and'` not' q)) `or'` p
+    [ (neg p `disj` neg (r `disj` neg q)) `disj` p
+    --              ^       ^
+    , (neg p `disj` (r `conj` neg q)) `disj` p
     --                  ^
-    , (not' p `or'` (r `implies` not' q)) `or'` p
+    , (neg p `disj` (r `impl` neg q)) `disj` p
     --                  ^
-    , (p `or'` not' (not' q))
-    --         ^     ^
+    , (p `disj` neg (neg q))
+    --          ^     ^
     ]
 
 unitTests = testGroup "Unit tests"
