@@ -1,3 +1,5 @@
+module Data.Logic.Propositional where
+
 data Formula
     = Literal String
     | Not     Formula
