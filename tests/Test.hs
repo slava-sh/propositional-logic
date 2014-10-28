@@ -61,11 +61,25 @@ isCNF x                 = isDisj x
         isLit (Negation (Variable _)) = True
         isLit _                       = False
 
+containsNonatomicNegations :: Expr -> Bool
+containsNonatomicNegations = go
+    where
+        go (Variable _)            = False
+        go (Negation (Variable _)) = False
+        go (Negation _)            = True
+        go (Conjunction x y)       = go x || go y
+        go (Disjunction x y)       = go x || go y
+        go (Implication x y)       = go x || go y
+
 qcTests = testGroup "QuickCheck tests"
     [ testProperty "CNF of x is semantically equivalent to x" $ \x ->
           truthTable (toCNF x) == truthTable x
     , testProperty "CNF is a conjunction of disjuncitons" $ \x ->
           isCNF $ toCNF x
+    , testProperty "NNF of x is semantically equivalent to x" $ \x ->
+          truthTable (toNNF x) == truthTable x
+    , testProperty "In NNF only atoms are negated" $ \x ->
+          not . containsNonatomicNegations $ toNNF x
     ]
 
 cnfs =
