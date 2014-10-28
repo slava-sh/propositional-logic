@@ -49,4 +49,9 @@ negationNormalForm' (Negation (Disjunction x y)) =
 negationNormalForm' _ = error "negationNormalForm': incorrect expression"
 
 implicationFree :: Expr -> Expr
-implicationFree = id
+implicationFree (Literal x)       = Literal x
+implicationFree (Negation x)      = Negation (implicationFree x)
+implicationFree (Conjunction x y) = (Conjunction `on` implicationFree) x y
+implicationFree (Disjunction x y) = (Disjunction `on` implicationFree) x y
+implicationFree (Implication x y) =
+    Disjunction (Negation (implicationFree x)) (implicationFree y)
