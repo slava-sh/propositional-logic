@@ -2,6 +2,7 @@ module Data.Logic.Propositional
     ( Expr(..)
     , Atom
     , toCNF
+    , toNNF
     ) where
 
 import Data.Function (on)
