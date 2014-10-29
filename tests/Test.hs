@@ -138,4 +138,10 @@ unitTests = testGroup "Unit tests"
   , testCase "isCNF: False" $ False @=? any isCNF notCnfs
   , testCase "isDNF: True"  $ True  @=? all isDNF dnfs
   , testCase "isDNF: False" $ False @=? any isDNF notDnfs
+  , testCase "show Expr" $
+      show (p :\/ q :\/ r :/\ r :\/ ((r :\/ q) :/\ q) :\/ q)
+        @?= "(p ∨ (q ∨ ((r ∧ r) ∨ (((r ∨ q) ∧ q) ∨ q))))"
+  , testCase "show Expr" $
+      show (p :/\ q :-> p :\/ q :-> Neg r)
+        @?= "((p ∧ q) → ((p ∨ q) → ¬r))"
   ]

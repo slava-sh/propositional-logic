@@ -21,15 +21,14 @@ infixr 2 :\/
 infixr 1 :->
 
 instance Show Expr where
-  showsPrec p expr = case expr of
-      (Var x)   -> showChar x
-      (Neg x)   -> showChar '¬' . showsPrec 4 x
-      (x :/\ y) -> showBinary " ∧ " 3 x y
-      (x :\/ y) -> showBinary " ∨ " 2 x y
-      (x :-> y) -> showBinary " → " 1 x y
+  show expr = case expr of
+      (Var x)   -> [x]
+      (Neg x)   -> '¬' : show x
+      (x :/\ y) -> showBinary "∧" x y
+      (x :\/ y) -> showBinary "∨" x y
+      (x :-> y) -> showBinary "→" x y
     where
-      showBinary op p' x y =
-        showParen (p' < p) $ showsPrec p' x . showString op . showsPrec p' y
+      showBinary op x y = "(" ++ show x ++ " " ++ op ++ " " ++ show y ++ ")"
 
 toCNF :: Expr -> Expr
 toCNF = go . toNNF
