@@ -18,6 +18,7 @@ library
   ghc-options:         -Wall
   build-depends:       base >=4.7 && <4.8
                      , parsec
+                     , transformers
 
 test-suite Test
   hs-source-dirs:      tests
