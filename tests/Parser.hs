@@ -28,6 +28,10 @@ tests = testGroup "Data.Logic.Propositional.Parser"
   , testParseExpr "p | ~~q" $ p :\/ Neg (Neg q)
   , testParseExpr "p -> q -> r -> p & q & r | p & q | r -> q" $
       p :-> (q :-> (r :-> (((p :/\ (q :/\ r)) :\/ ((p :/\ q) :\/ r)) :-> q)))
+  , testProperty "parseExpr . show == id" $ \expr ->
+      case parseExpr "" (show expr) of
+        Left _  -> False
+        Right x -> x == expr
   ]
 
 testParseExpr :: String -> Expr -> TestTree
