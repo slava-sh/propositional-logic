@@ -16,8 +16,8 @@ data Expr
   | Expr :-> Expr
   deriving Eq
 
-infixl 3 :/\
-infixl 2 :\/
+infixr 3 :/\
+infixr 2 :\/
 infixr 1 :->
 
 instance Show Expr where
