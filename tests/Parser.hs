@@ -19,15 +19,15 @@ tests = testGroup "Data.Logic.Propositional.Parser"
   , testParseExpr " ( (q ) ) " q
   , testParseExpr "(  (  ( ((q)   )  ) ))" q
   , testParseExpr "~  ~  ( ~(q)   )" $ Neg (Neg ( Neg q))
-  , testParseExpr "(~p | ~(q | ~q)) | p" $ (Neg p :\/ Neg (r :\/ Neg q)) :\/ p
+  , testParseExpr "(~p | ~(q | ~q)) | p" $ (Neg p :\/ Neg (q :\/ Neg q)) :\/ p
   , testParseExpr "(~p | r & ~q) | p" $ (Neg p :\/ (r :/\ Neg q)) :\/ p
-  , testParseExpr "(~p | r -> ~q) | p" $ (Neg p :\/ (r :-> Neg q)) :\/ p
+  , testParseExpr "(~p | r -> ~q) | p" $ ((Neg p :\/ r) :-> Neg q) :\/ p
   , testParseExpr "p | ~~q" $ p :\/ Neg (Neg q)
   , testParseExpr "(~p & (r | ~q)) & p" $ (Neg p :/\ (r :\/ Neg q)) :/\ p
-  , testParseExpr "(~p | r -> q) | p" $ (Neg p :\/ (r :-> q)) :\/ p
+  , testParseExpr "(~p | (r -> q)) | p" $ (Neg p :\/ (r :-> q)) :\/ p
   , testParseExpr "p | ~~q" $ p :\/ Neg (Neg q)
   , testParseExpr "p -> q -> r -> p & q & r | p & q | r -> q" $
-      p :-> (q :-> (r :-> (((p :/\ (q :/\ r)) :\/ ((p :/\ q) :\/ r)) :-> p)))
+      p :-> (q :-> (r :-> (((p :/\ (q :/\ r)) :\/ ((p :/\ q) :\/ r)) :-> q)))
   ]
 
 testParseExpr :: String -> Expr -> TestTree
