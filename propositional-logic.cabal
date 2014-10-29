@@ -1,6 +1,6 @@
 name:                propositional-logic
 version:             0.1.0.0
-license:             MIT
+license:             PublicDomain
 license-file:        LICENSE
 author:              Slava Shklyaev
 maintainer:          shk.slava@gmail.com
