@@ -31,11 +31,11 @@ instance Show Expr where
         showParen (p' < p) $ showsPrec p' x . showString op . showsPrec p' y
 
 toCNF :: Expr -> Expr
-toCNF = toCNF' . toNNF
+toCNF = go . toNNF
   where
-    toCNF' (x :/\ y) = toCNF' x :/\ toCNF' y
-    toCNF' (x :\/ y) = toCNF' x `dist` toCNF' y
-    toCNF' x         = x
+    go (x :/\ y) = go x :/\ go y
+    go (x :\/ y) = go x `dist` go y
+    go x         = x
 
     dist (x1 :/\ x2) y = (x1 `dist` y) :/\ (x2 `dist` y)
     dist x (y1 :/\ y2) = (x `dist` y1) :/\ (x `dist` y2)

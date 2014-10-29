@@ -36,13 +36,13 @@ truthTable x = do
   return $ eval [('p', p), ('q', q), ('r', r)] x
 
 eval :: [(Atom, Bool)] -> Expr -> Bool
-eval env = eval'
+eval env = go
   where
-    eval' (Var x)   = fromJust $ lookup x env
-    eval' (Neg x)   = not $ eval' x
-    eval' (x :/\ y) = eval' x && eval' y
-    eval' (x :\/ y) = eval' x || eval' y
-    eval' (x :-> y) = not (eval' x) || eval' y
+    go (Var x)   = fromJust $ lookup x env
+    go (Neg x)   = not $ go x
+    go (x :/\ y) = go x && go y
+    go (x :\/ y) = go x || go y
+    go (x :-> y) = not (go x) || go y
 
 isCNF :: Expr -> Bool
 isCNF (x :/\ y) = isCNF x && isCNF y
