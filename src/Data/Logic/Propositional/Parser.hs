@@ -27,15 +27,15 @@ var = Var <$> (letter <* spaces)
 
 table :: OperatorTable String u Identity Expr
 table =
-  [ [unary  "~"  Neg]
-  , [binary "&"  (:/\)]
-  , [binary "|"  (:\/)]
-  , [binary "->" (:->)]
+  [ map (unary  (Neg)) ["¬", "~"]
+  , map (binary (:/\)) ["∧", "&"]
+  , map (binary (:\/)) ["∨", "|"]
+  , map (binary (:->)) ["→", "->"]
   ]
   where
-    unary   op f = Prefix $ parseOp op f `chainl1` return (.)
-    binary  op f = Infix (parseOp op f) AssocRight
-    parseOp op f = string op *> spaces *> return f
+    unary    f op = Prefix $ operator f op `chainl1` return (.)
+    binary   f op = Infix (operator f op) AssocRight
+    operator f op = string op *> spaces *> return f
 
 parens :: Parser a -> Parser a
 parens = between (char '(' *> spaces) (char ')' *> spaces)
