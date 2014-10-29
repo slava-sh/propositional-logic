@@ -2,6 +2,7 @@ module Data.Logic.Propositional
   ( Expr(..)
   , Atom
   , toCNF
+  , toDNF
   , toNNF
   ) where
 
@@ -40,6 +41,17 @@ toCNF = go . toNNF
     dist (x1 :/\ x2) y = (x1 `dist` y) :/\ (x2 `dist` y)
     dist x (y1 :/\ y2) = (x `dist` y1) :/\ (x `dist` y2)
     dist x y           = x :\/ y
+
+toDNF :: Expr -> Expr
+toDNF = go . toNNF
+  where
+    go (x :/\ y) = go x `dist` go y
+    go (x :\/ y) = go x :\/ go y
+    go x         = x
+
+    dist (x1 :\/ x2) y = (x1 `dist` y) :\/ (x2 `dist` y)
+    dist x (y1 :\/ y2) = (x `dist` y1) :\/ (x `dist` y2)
+    dist x y           = x :/\ y
 
 toNNF :: Expr -> Expr
 toNNF x@(Var _)       = x

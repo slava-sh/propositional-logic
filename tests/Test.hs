@@ -3,6 +3,7 @@ import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
 import Control.Applicative
 import Data.Maybe
+import Data.Function (on)
 
 import Data.Logic.Propositional
 
@@ -16,17 +17,14 @@ q = Var 'q'
 r = Var 'r'
 
 instance Arbitrary Expr where
-  arbitrary = sized expr
-    where
-      expr 0 = elements [p, q, r]
-      expr n = oneof
-        [ (Neg) <$> expr n'
-        , (:/\) <$> expr n' <*> expr n'
-        , (:\/) <$> expr n' <*> expr n'
-        , (:->) <$> expr n' <*> expr n'
-        ]
-        where
-          n' = n `div` 2
+  arbitrary = sized $ \n -> resize (n `div` 2) $ do
+    frequency
+      [ (1, elements [p, q, r])
+      , (n, (Neg) <$> arbitrary)
+      , (n, (:/\) <$> arbitrary <*> arbitrary)
+      , (n, (:\/) <$> arbitrary <*> arbitrary)
+      , (n, (:->) <$> arbitrary <*> arbitrary)
+      ]
 
 truthTable :: Expr -> [Bool]
 truthTable x = do
@@ -44,6 +42,14 @@ eval env = go
     go (x :\/ y) = go x || go y
     go (x :-> y) = not (go x) || go y
 
+equals :: Expr -> Expr -> Bool
+equals = (==) `on` truthTable
+
+isLit :: Expr -> Bool
+isLit (Var _)       = True
+isLit (Neg (Var _)) = True
+isLit _             = False
+
 isCNF :: Expr -> Bool
 isCNF (x :/\ y) = isCNF x && isCNF y
 isCNF x         = isDisj x
@@ -51,9 +57,12 @@ isCNF x         = isDisj x
     isDisj (x :\/ y) = isDisj x && isDisj y
     isDisj x         = isLit x
 
-    isLit (Var _)       = True
-    isLit (Neg (Var _)) = True
-    isLit _             = False
+isDNF :: Expr -> Bool
+isDNF (x :\/ y) = isDNF x && isDNF y
+isDNF x         = isConj x
+  where
+    isConj (x :/\ y) = isConj x && isConj y
+    isConj x         = isLit x
 
 containsNonatomicNegations :: Expr -> Bool
 containsNonatomicNegations = go
@@ -67,11 +76,15 @@ containsNonatomicNegations = go
 
 qcTests = testGroup "QuickCheck tests"
   [ testProperty "CNF of x is semantically equivalent to x" $ \x ->
-      truthTable (toCNF x) == truthTable x
-  , testProperty "CNF is a conjunction of disjuncitons" $ \x ->
-      isCNF $ toCNF x
+      toCNF x `equals` x
+  , testProperty "DNF of x is semantically equivalent to x" $ \x ->
+      toDNF x `equals` x
   , testProperty "NNF of x is semantically equivalent to x" $ \x ->
-      truthTable (toNNF x) == truthTable x
+      toNNF x `equals` x
+  , testProperty "CNF is a conjunction of disjuncitons of literals" $ \x ->
+      isCNF $ toCNF x
+  , testProperty "DNF is a disjunction of conjuncitons of literals" $ \x ->
+      isDNF $ toDNF x
   , testProperty "In NNF only atoms are negated" $ \x ->
       not . containsNonatomicNegations $ toNNF x
   ]
@@ -81,6 +94,7 @@ cnfs =
   , p :\/ Neg q
   , (Neg p :\/ (r :\/ Neg q)) :\/ (Neg q :\/ (Neg p :\/ q))
   , p :/\ q :/\ Neg r :/\ r
+  , p :/\ q :/\ (Neg r :\/ ((q :\/ r) :\/ p)) :/\ r
   ]
 
 notCnfs =
@@ -90,14 +104,38 @@ notCnfs =
   --              ^
   , (Neg p :\/ (r :-> Neg q)) :\/ p
   --              ^
-  , (p :\/ Neg (Neg q))
-  --       ^    ^
+  , p :\/ Neg (Neg q)
+  --      ^    ^
+  ]
+
+dnfs =
+  [ p
+  , p :\/ Neg q
+  , (Neg p :\/ (r :\/ Neg q)) :\/ (Neg q :\/ (Neg p :\/ q))
+  , p :/\ q :/\ Neg r :/\ r
+  , p :\/ q :\/ (Neg r :/\ ((q :/\ r) :/\ p)) :\/ r
+  ]
+
+notDnfs =
+  [ (Neg p :\/ Neg (r :\/ Neg q)) :\/ p
+  --           ^      ^
+  , (Neg p :/\ (r :\/ Neg q)) :/\ p
+  --              ^
+  , (Neg p :\/ (r :-> Neg q)) :\/ p
+  --              ^
+  , p :\/ Neg (Neg q)
+  --      ^    ^
   ]
 
 unitTests = testGroup "Unit tests"
   [ testCase "CNF of an atom: p" $ toCNF p @?= p
   , testCase "CNF of an atom: q" $ toCNF q @?= q
   , testCase "CNF of an atom: r" $ toCNF r @?= r
+  , testCase "DNF of an atom: p" $ toDNF p @?= p
+  , testCase "DNF of an atom: q" $ toDNF q @?= q
+  , testCase "DNF of an atom: r" $ toDNF r @?= r
   , testCase "isCNF: True"  $ True  @=? all isCNF cnfs
   , testCase "isCNF: False" $ False @=? any isCNF notCnfs
+  , testCase "isDNF: True"  $ True  @=? all isDNF dnfs
+  , testCase "isDNF: False" $ False @=? any isDNF notDnfs
   ]
