@@ -1,31 +1,29 @@
-name:                proposition-cnf
+name:                propositional-logic
 version:             0.1.0.0
-synopsis:            Transform a propositional logic formula into an equivalent formula in CNF.
--- description:         
 license:             MIT
 license-file:        LICENSE
 author:              Slava Shklyaev
 maintainer:          shk.slava@gmail.com
 category:            Logic
 build-type:          Simple
+extra-source-files:  README
 cabal-version:       >=1.10
 
 library
-  hs-source-dirs:      src
   exposed-modules:     Data.Logic.Propositional
                      , Data.Logic.Propositional.Parser
+  hs-source-dirs:      src
   default-language:    Haskell2010
-  ghc-options:         -Wall
   build-depends:       base >=4.7 && <4.8
-                     , parsec
-                     , transformers
+                     , parsec >=3.1 && <3.2
+                     , transformers >=0.3 && <0.4
 
-test-suite Test
+test-suite Propositional
   hs-source-dirs:      tests
-  main-is:             Test.hs
+  main-is:             Propositional.hs
   type:                exitcode-stdio-1.0
   default-language:    Haskell2010
-  build-depends:       proposition-cnf
+  build-depends:       propositional-logic
                      , base >=4.7 && <4.8
                      , tasty >= 0.10
                      , tasty-quickcheck >= 0.8
@@ -36,7 +34,7 @@ test-suite Parser
   main-is:             Parser.hs
   type:                exitcode-stdio-1.0
   default-language:    Haskell2010
-  build-depends:       proposition-cnf
+  build-depends:       propositional-logic
                      , base >=4.7 && <4.8
                      , tasty >= 0.10
                      , tasty-quickcheck >= 0.8
